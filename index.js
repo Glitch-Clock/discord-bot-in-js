@@ -1,4 +1,5 @@
 const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
+const keepAlive = require('./webservice');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 const BOT_TOKEN = "YOUR_BOT_TOKEN"; // Your bot token
@@ -160,4 +161,6 @@ client.on("messageCreate", async (msg) => {
     }
 });
 
+
+keepAlive();
 client.login(BOT_TOKEN);

@@ -21,7 +21,7 @@ client.on("messageCreate", async (msg) => {
     const command = args.shift().toLowerCase();
 
     // Check for discord developer badge
-    if (command === "developerBadge") {
+    if (command === "developer_badge") {
         msg.reply("https://discord.com/developers/active-developer");
     }
     

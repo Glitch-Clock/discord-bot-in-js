@@ -38,7 +38,26 @@ client.on("messageCreate", async (msg) => {
         msg.reply(`${member.user.tag} has been granted bot admin permissions.`);
     }
 
+    // Remove admin command
+    if (command === "remove_admin") {
+        if (msg.author.id !== BOT_OWNER_ID) {
+            return msg.reply("❌ You are not authorized to remove admins!");
+        }
 
+        const member = msg.mentions.members.first();
+        if (!member) {
+            return msg.reply("⚠️ Please mention a user to remove from the admin list.");
+        }
+
+        if (!botAdmins.has(member.id)) {
+            return msg.reply("⚠️ This user is not an admin.");
+        }
+
+        botAdmins.delete(member.id);
+        msg.reply(`✅ **${member.user.tag}** has been removed from the admin list.`);
+    }
+
+    
     // List Admins Command
     if (command === "list_admins") {
         if (approvedAdmins.size === 1) { // Only the bot owner exists
@@ -76,15 +95,17 @@ client.on("messageCreate", async (msg) => {
                 { name: "`$mute @user`", value: "Mute a mentioned user. (Requires Manage Roles permission)" },
                 { name: "`$unmute @user`", value: "Unmute a mentioned user. (Requires Manage Roles permission)" },
                 { name: "`$clear <amount>`", value: "Delete a specified number of messages (1-100). (Requires Manage Messages permission)" },
-                { name: "`$make_admin @user`", value: "Grant a user permission to use bot commands. (Bot owner only)" },
-                { name: "`$list_admins`", value: "Display a list of users with bot admin permissions." }
+                { name: "`$make_admin @user`", value: "Grant admin permissions to a specific user. (Only bot owner can use this)" },
+                { name: "`$list_admins`", value: "Display all users with admin permissions." },
+                { name: "`$remove_admin @user`", value: "Remove a user from the admin list, revoking bot permissions. (Only bot owner can use this)" }
             )
             .setColor("#00FF00") // Green color
             .setFooter({ text: `Requested by ${msg.author.tag}`, iconURL: msg.author.displayAvatarURL() })
             .setTimestamp();
 
         return msg.reply({ embeds: [embed] });
-}
+    }
+
 
     // Developer Badge Command (Anyone Can Use)
     if (command === "developer_badge") {

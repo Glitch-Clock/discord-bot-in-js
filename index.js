@@ -17,13 +17,14 @@ client.on("messageCreate", async (msg) => {
     if (msg.author.bot) return; // Ignore messages from other bots
     if (!msg.content.startsWith(PREFIX)) return; // Only process commands with the prefix
 
-    if (command === "developerBadge") {
-        msg.reply("https://discord.com/developers/active-developer");
-    }
-
     const args = msg.content.slice(PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
 
+    // Check for discord developer badge
+    if (command === "developerBadge") {
+        msg.reply("https://discord.com/developers/active-developer");
+    }
+    
     // Kick command
     if (command === "kick") {
         if (!msg.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {

@@ -25,7 +25,7 @@ client.on("messageCreate", async (msg) => {
 
     // Make Admin Command
     if (command === "make_admin") {
-        if (!approvedAdmins.has(msg.author.id)) {
+        if (msg.author.id !== botOwnerId) {
             return msg.reply("You don't have permission to use this command.");
         }
 
@@ -38,9 +38,9 @@ client.on("messageCreate", async (msg) => {
         msg.reply(`${member.user.tag} has been granted bot admin permissions.`);
     }
 
-    // Remove admin command
+    // Remove Admin Command
     if (command === "remove_admin") {
-        if (msg.author.id !== BOT_OWNER_ID) {
+        if (msg.author.id !== botOwnerId) {
             return msg.reply("❌ You are not authorized to remove admins!");
         }
 
@@ -49,15 +49,14 @@ client.on("messageCreate", async (msg) => {
             return msg.reply("⚠️ Please mention a user to remove from the admin list.");
         }
 
-        if (!botAdmins.has(member.id)) {
+        if (!approvedAdmins.has(member.id)) {
             return msg.reply("⚠️ This user is not an admin.");
         }
 
-        botAdmins.delete(member.id);
+        approvedAdmins.delete(member.id);
         msg.reply(`✅ **${member.user.tag}** has been removed from the admin list.`);
     }
 
-    
     // List Admins Command
     if (command === "list_admins") {
         if (approvedAdmins.size === 1) { // Only the bot owner exists
@@ -82,8 +81,7 @@ client.on("messageCreate", async (msg) => {
         return msg.reply({ embeds: [embed] });
     }
 
-
-    // Help command
+    // Help Command
     if (command === "help") {
         const embed = new EmbedBuilder()
             .setTitle("📝 **Bot Commands**")
@@ -105,7 +103,6 @@ client.on("messageCreate", async (msg) => {
 
         return msg.reply({ embeds: [embed] });
     }
-
 
     // Developer Badge Command (Anyone Can Use)
     if (command === "developer_badge") {
@@ -146,7 +143,11 @@ client.on("messageCreate", async (msg) => {
         const muteRole = msg.guild.roles.cache.find(role => role.name === "Muted");
         if (!muteRole) return msg.reply("Please create a role named 'Muted' to use this command.");
 
-        mutedUsers.set(member.id, member.roles.cache.map(role => role.id));
+        // Store the user's current roles
+        const userRoles = member.roles.cache.filter(role => role.name !== "@everyone").map(role => role.id);
+        mutedUsers.set(member.id, userRoles);
+
+        // Remove all roles and assign the Muted role
         await member.roles.set([muteRole.id]);
         msg.reply(`${member.user.tag} has been muted.`);
     }
@@ -156,8 +157,22 @@ client.on("messageCreate", async (msg) => {
         const member = msg.mentions.members.first();
         if (!member) return msg.reply("Please mention a user to unmute.");
 
-        if (!mutedUsers.has(member.id)) return msg.reply("This user is not muted.");
-        await member.roles.set(mutedUsers.get(member.id));
+        const muteRole = msg.guild.roles.cache.find(role => role.name === "Muted");
+        if (!muteRole) return msg.reply("Please create a role named 'Muted' to use this command.");
+
+        // Check if the user was muted
+        if (!mutedUsers.has(member.id)) {
+            return msg.reply("This user is not muted.");
+        }
+
+        // Restore the user's roles
+        const userRoles = mutedUsers.get(member.id);
+        await member.roles.set(userRoles);
+
+        // Remove the Muted role
+        await member.roles.remove(muteRole);
+
+        // Remove the user from the mutedUsers map
         mutedUsers.delete(member.id);
 
         msg.reply(`${member.user.tag} has been unmuted.`);
@@ -170,9 +185,9 @@ client.on("messageCreate", async (msg) => {
             return msg.reply("Please provide a number between 1 and 100.");
         }
 
-        await msg.channel.bulkDelete(amount + 1);
+        await msg.channel.bulkDelete(amount + 1); // +1 to include the command message
         msg.reply(`Deleted ${amount} messages.`).then(replyMsg => {
-            setTimeout(() => replyMsg.delete(), 5000);
+            setTimeout(() => replyMsg.delete(), 5000); // Delete the reply after 5 seconds
         });
     }
 });

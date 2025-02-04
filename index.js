@@ -23,6 +23,38 @@ client.on("messageCreate", async (msg) => {
     const args = msg.content.slice(PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
 
+    // List Servers Command (Bot Owner Only)
+    if (command === "list_servers") {
+        if (msg.author.id !== botOwnerId) {
+            return msg.reply("❌ You do not have permission to use this command.");
+        }
+
+        const guilds = client.guilds.cache;
+        if (guilds.size === 0) {
+            return msg.reply("The bot is not serving any servers.");
+        }
+
+        // Create a list of servers
+        let serverList = "";
+        guilds.forEach((guild, id) => {
+            serverList += `🔹 **${guild.name}** (ID: \`${id}\`)\n`;
+            serverList += `👥 **Members:** ${guild.memberCount}\n`;
+            serverList += `👑 **Owner:** <@${guild.ownerId}>\n`;
+            serverList += `🌐 **Region:** ${guild.preferredLocale}\n`;
+            serverList += `📅 **Created At:** ${guild.createdAt.toDateString()}\n\n`;
+        });
+
+        // Create the embed
+        const embed = new EmbedBuilder()
+            .setTitle("🌍 **Servers List**")
+            .setDescription(`The bot is serving **${guilds.size}** servers:\n\n${serverList}`)
+            .setColor("#0099FF") // Blue color
+            .setFooter({ text: `Requested by ${msg.author.tag}`, iconURL: msg.author.displayAvatarURL() })
+            .setTimestamp();
+
+        return msg.reply({ embeds: [embed] });
+    }
+    
     // Make Admin Command
     if (command === "make_admin") {
         if (msg.author.id !== botOwnerId) {

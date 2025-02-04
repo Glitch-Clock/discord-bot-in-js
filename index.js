@@ -26,7 +26,7 @@ client.on("messageCreate", async (msg) => {
             .setTitle("📝 **Bot Commands**")
             .setDescription("Here is a list of all available commands:")
             .addFields(
-                { name: "`$developerbadge`", value: "Get the link to claim your Discord Active Developer Badge." },
+                { name: "`$developer_badge`", value: "Get the link to claim your Discord Active Developer Badge." },
                 { name: "`$kick @user`", value: "Kick a mentioned user from the server. (Requires Kick Members permission)" },
                 { name: "`$ban @user`", value: "Ban a mentioned user from the server. (Requires Ban Members permission)" },
                 { name: "`$mute @user`", value: "Mute a mentioned user. (Requires Manage Roles permission)" },

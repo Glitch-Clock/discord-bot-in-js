@@ -20,6 +20,26 @@ client.on("messageCreate", async (msg) => {
     const args = msg.content.slice(PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
 
+    // Help command
+    if (command === "help") {
+        const embed = new EmbedBuilder()
+            .setTitle("📝 **Bot Commands**")
+            .setDescription("Here is a list of all available commands:")
+            .addFields(
+                { name: "`$developerbadge`", value: "Get the link to claim your Discord Active Developer Badge." },
+                { name: "`$kick @user`", value: "Kick a mentioned user from the server. (Requires Kick Members permission)" },
+                { name: "`$ban @user`", value: "Ban a mentioned user from the server. (Requires Ban Members permission)" },
+                { name: "`$mute @user`", value: "Mute a mentioned user. (Requires Manage Roles permission)" },
+                { name: "`$unmute @user`", value: "Unmute a mentioned user. (Requires Manage Roles permission)" },
+                { name: "`$clear <amount>`", value: "Delete a specified number of messages (1-100). (Requires Manage Messages permission)" }
+            )
+            .setColor("#00FF00") // Green color
+            .setFooter({ text: `Requested by ${msg.author.tag}`, iconURL: msg.author.displayAvatarURL() })
+            .setTimestamp();
+
+        return msg.reply({ embeds: [embed] });
+    }
+    
     // Check for discord developer badge
     if (command === "developer_badge") {
         msg.reply("https://discord.com/developers/active-developer");

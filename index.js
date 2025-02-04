@@ -38,26 +38,53 @@ client.on("messageCreate", async (msg) => {
         msg.reply(`${member.user.tag} has been granted bot admin permissions.`);
     }
 
-    // Help Command (Anyone Can Use)
+
+    // List Admins Command
+    if (command === "list_admins") {
+        if (approvedAdmins.size === 1) { // Only the bot owner exists
+            return msg.reply("📜 **Bot Admins List:**\n\n*No admins assigned yet.*");
+        }
+
+        let adminList = "";
+        approvedAdmins.forEach(adminId => {
+            const adminUser = msg.guild.members.cache.get(adminId);
+            if (adminUser) {
+                adminList += `🔹 **${adminUser.user.tag}** (<@${adminId}>)\n`;
+            }
+        });
+
+        const embed = new EmbedBuilder()
+            .setTitle("🛠️ **Bot Admins List**")
+            .setDescription(adminList || "*No admins assigned yet.*")
+            .setColor("#FFD700")
+            .setFooter({ text: `Requested by ${msg.author.tag}`, iconURL: msg.author.displayAvatarURL() })
+            .setTimestamp();
+
+        return msg.reply({ embeds: [embed] });
+    }
+
+
+    // Help command
     if (command === "help") {
         const embed = new EmbedBuilder()
             .setTitle("📝 **Bot Commands**")
             .setDescription("Here is a list of all available commands:")
             .addFields(
                 { name: "`$developer_badge`", value: "Get the link to claim your Discord Active Developer Badge." },
-                { name: "`$kick @user`", value: "Kick a mentioned user from the server. (Requires Admin)" },
-                { name: "`$ban @user`", value: "Ban a mentioned user from the server. (Requires Admin)" },
-                { name: "`$mute @user`", value: "Mute a mentioned user. (Requires Admin)" },
-                { name: "`$unmute @user`", value: "Unmute a mentioned user. (Requires Admin)" },
-                { name: "`$clear <amount>`", value: "Delete a specified number of messages (1-100). (Requires Admin)" },
-                { name: "`$make_admin @user`", value: "Grant admin permissions to a user." }
+                { name: "`$kick @user`", value: "Kick a mentioned user from the server. (Requires Kick Members permission)" },
+                { name: "`$ban @user`", value: "Ban a mentioned user from the server. (Requires Ban Members permission)" },
+                { name: "`$mute @user`", value: "Mute a mentioned user. (Requires Manage Roles permission)" },
+                { name: "`$unmute @user`", value: "Unmute a mentioned user. (Requires Manage Roles permission)" },
+                { name: "`$clear <amount>`", value: "Delete a specified number of messages (1-100). (Requires Manage Messages permission)" },
+                { name: "`$make_admin @user`", value: "Grant a user permission to use bot commands. (Bot owner only)" },
+                { name: "`$list_admins`", value: "Display a list of users with bot admin permissions." }
             )
-            .setColor("#00FF00")
+            .setColor("#00FF00") // Green color
             .setFooter({ text: `Requested by ${msg.author.tag}`, iconURL: msg.author.displayAvatarURL() })
             .setTimestamp();
 
         return msg.reply({ embeds: [embed] });
-    }
+}
 
     // Developer Badge Command (Anyone Can Use)
     if (command === "developer_badge") {

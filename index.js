@@ -1,8 +1,11 @@
 const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-const BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"; // Replace with your bot token
+const BOT_TOKEN = "YOUR_BOT_TOKEN"; // Your bot token
 const PREFIX = "$";
+
+
+const mutedUsers = new Map(); // Store muted users and their roles
 
 
 // Bot Setup
@@ -13,6 +16,10 @@ client.on("ready", () => {
 client.on("messageCreate", async (msg) => {
     if (msg.author.bot) return; // Ignore messages from other bots
     if (!msg.content.startsWith(PREFIX)) return; // Only process commands with the prefix
+
+    if (command === "developerBadge") {
+        msg.reply("https://discord.com/developers/active-developer");
+    }
 
     const args = msg.content.slice(PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
@@ -71,7 +78,12 @@ client.on("messageCreate", async (msg) => {
             return msg.reply("Please create a role named 'Muted' to use this command.");
         }
 
-        await member.roles.add(muteRole);
+        // Store the user's current roles
+        const userRoles = member.roles.cache.filter(role => role.name !== "@everyone").map(role => role.id);
+        mutedUsers.set(member.id, userRoles);
+
+        // Remove all roles and assign the Muted role
+        await member.roles.set([muteRole.id]);
         msg.reply(`${member.user.tag} has been muted.`);
     }
 
@@ -91,7 +103,21 @@ client.on("messageCreate", async (msg) => {
             return msg.reply("Please create a role named 'Muted' to use this command.");
         }
 
+        // Check if the user was muted
+        if (!mutedUsers.has(member.id)) {
+            return msg.reply("This user is not muted.");
+        }
+
+        // Restore the user's roles
+        const userRoles = mutedUsers.get(member.id);
+        await member.roles.set(userRoles);
+
+        // Remove the Muted role
         await member.roles.remove(muteRole);
+
+        // Remove the user from the mutedUsers map
+        mutedUsers.delete(member.id);
+
         msg.reply(`${member.user.tag} has been unmuted.`);
     }
 
@@ -112,7 +138,5 @@ client.on("messageCreate", async (msg) => {
         });
     }
 });
-
-
 
 client.login(BOT_TOKEN);
